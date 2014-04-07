@@ -5,7 +5,21 @@
 	<title>Closures Assignment</title>
 	<script type="text/javascript">
 		function getSpinner(){
-			//fill in the blanks
+			var counter = 0;
+			function up(){
+				counter++;
+			}
+			function down(){
+				counter--;
+			}
+			function value(){
+				console.log(counter);
+			}
+			return {
+				up : up,
+				down : down,
+				value : value
+			};
 
 		}
 
