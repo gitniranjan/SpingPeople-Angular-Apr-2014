@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Task Manager</title>
+	<style>
+	.completed {
+		color : red;
+		font-style: italic;
+		text-decoration: line-through;
+	}
+	</style>
+	<script src="../script/angular.js"></script>
+	<script>
+	angular.module('TaskModule',[])
+		.filter('FriendlyTaskName',[function(){
+			return function(taskName){
+				return taskName.length > 20 ? taskName.substring(0,10) + "..." : taskName;
+			}
+		}])
+		.factory('TaskStorage',['$window',function($window){
+			var storage = $window.localStorage;
+			return {
+				addTask: function(taskName){
+					var newTaskId = new Date().getTime().toString();
+					var newTask =  {
+						id : newTaskId,
+						name : taskName,
+						isCompleted : false
+					};
+					storage.setItem(newTaskId,$window.JSON.stringify(newTask));
+					return newTask;
+				},
+				saveTask : function(task){
+					storage.setItem(task.id,$window.JSON.stringify(task));
+				},
+				removeTask : function(taskId){
+					storage.removeItem(taskId);
+				},
+				getAllTasks : function(){
+					var tasks = [];
+					for(var i=0;i<storage.length;i++){
+						var key = storage.key(i);
+						var taskAsString = storage.getItem(key);
+						tasks.push($window.JSON.parse(taskAsString));
+					}
+					return tasks;
+				}
+			}
+		}])
+		.controller('TaskController',['$scope','TaskStorage',function taskController($scope,ts){
+			$scope.taskCollection = {
+				items  : ts.getAllTasks(),
+				addTask : function(taskName){
+					var newTask = ts.addTask(taskName);
+					console.log(newTask);
+					this.items.push(newTask)
+				},
+				toggleCompletion : function(task){
+					task.isCompleted = !task.isCompleted;
+					ts.saveTask(task);
+				},
+				removeCompleted : function(){
+					for(var i=this.items.length-1;i>=0;i--){
+						var task = this.items[i];
+						if (task.isCompleted){
+							this.items.splice(i,1);
+							ts.removeTask(task.id);
+						}
+					}
+				}
+			}
+		}]);
+	</script>
+</head>
+<body data-ng-app="TaskModule">
+	<div class="content" data-ng-controller="TaskController">
+		<h3>Task Manager</h3>
+		<hr>
+		<span>Task :</span>
+		<input type="text" name="" id="" data-ng-model="newTask">
+		<input type="button" value="Add Task" data-ng-click="taskCollection.addTask(newTask)">
+		<input type="button" value="Remove Completed" data-ng-click="taskCollection.removeCompleted()">
+		<ul>
+			<li ng-repeat="task in taskCollection.items track by task.id" 
+			data-ng-click="taskCollection.toggleCompletion(task)"
+			ng-class="{completed:task.isCompleted}">{{task.name | FriendlyTaskName}}</li>
+		</ul>	
+	</div>
+	
+</body>
+</html>
